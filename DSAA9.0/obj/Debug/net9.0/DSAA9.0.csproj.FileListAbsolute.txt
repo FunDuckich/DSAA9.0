@@ -12,3 +12,4 @@ C:\Users\petro\RiderProjects\DSAA9.0\DSAA9.0\obj\Debug\net9.0\refint\DSAA9.0.dll
 C:\Users\petro\RiderProjects\DSAA9.0\DSAA9.0\obj\Debug\net9.0\DSAA9.0.pdb
 C:\Users\petro\RiderProjects\DSAA9.0\DSAA9.0\obj\Debug\net9.0\DSAA9.0.genruntimeconfig.cache
 C:\Users\petro\RiderProjects\DSAA9.0\DSAA9.0\obj\Debug\net9.0\ref\DSAA9.0.dll
+C:\Users\petro\RiderProjects\DSAA9.0\DSAA9.0\obj\Debug\net9.0\DSAA9.0.sourcelink.json

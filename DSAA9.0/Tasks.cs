@@ -1,13 +1,8 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.IO;
-using System.Linq;
+﻿using System.Collections;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace DSAA
+namespace DSAA9._0
 {
     public class Tasks
     {
@@ -680,7 +675,7 @@ namespace DSAA
                 return thisDate.Date.DayOfYear != 1;
             }
 
-            public static bool operator &(DateOperator thisDate, DateOperator otherDate)
+            public static bool operator &(DateOperator thisDate, DateOperator? otherDate)
             {
                 return thisDate.Equals(otherDate);
             }
@@ -718,9 +713,51 @@ namespace DSAA
 
         public static void Pr1710()
         {
-            DateOperator first = new DateOperator();
-            DateOperator second = new DateOperator();
-            Console.WriteLine(first & second);
+            using (StreamReader inF = new StreamReader(@"C:\Users\petro\RiderProjects\DSAA9.0\DSAA9.0\Pr1710(in).txt"))
+            {
+                using (StreamWriter outF =
+                       new StreamWriter(@"C:\Users\petro\RiderProjects\DSAA9.0\DSAA9.0\Pr1710(out).txt", false))
+                {
+                    List<DateOperator> dates = new List<DateOperator>();
+                    string line;
+                    while ((line = inF.ReadLine()) != null)
+                    {
+                        string[] data = line.Split('.');
+                        dates.Add(new DateOperator(int.Parse(data[0]), int.Parse(data[1]), int.Parse(data[2])));
+                    }
+
+                    DateOperator copy = new DateOperator(dates[0]);
+                    outF.WriteLine(copy + " - копия " + dates[0]);
+                    outF.WriteLine("Хэш " + dates[0] + " - " + dates[0].GetHashCode());
+                    outF.WriteLine("Хэш " + copy + " - " + copy.GetHashCode());
+                    outF.WriteLine("Результат Equals между ними: " + copy.Equals(dates[0]));
+                    DateOperator today = new DateOperator();
+                    outF.WriteLine("Сегодня - " + today + ", вчера - " + today.PreviousDate + ", завтра - " + today.NextDate);
+                    outF.WriteLine("До начала следующего месяца осталось " + today.DaysUntilNextMonth + " дней");
+                    outF.WriteLine("Этот год " + (today.IsYearBissextile ? "високосный" : "не високосный"));
+                    outF.WriteLine(today[0] + " - можно вывести ещё и с помощью индексации");
+                    outF.WriteLine(today[-7] + " - семь дней назад, с помощью индексации");
+                    foreach (DateOperator date in dates)
+                    {
+                        outF.WriteLine();
+                        outF.WriteLine(date + " - " + (!date ? "не последний день месяца" : "последний день месяца"));
+                        outF.WriteLine(date + " - " + (date ? "начало года" : "не начало года"));
+                    }
+                    
+                    outF.WriteLine();
+                    
+                    for (int i = 0; i < dates.Count - 1; i++)
+                    {
+                        for (int j = i + 1; j < dates.Count; j++)
+                        {
+                            if (dates[i] && dates[j])
+                            {
+                                outF.WriteLine(dates[i] + " и " + dates[j] + " - одинаковые даты");
+                            }
+                        }
+                    }
+                }
+            }
         }
 
         #endregion

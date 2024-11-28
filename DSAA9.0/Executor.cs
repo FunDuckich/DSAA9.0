@@ -1,6 +1,4 @@
-﻿using DSAA;
-
-namespace DSAA9._0
+﻿namespace DSAA9._0
 {
     internal class Executor
     {
