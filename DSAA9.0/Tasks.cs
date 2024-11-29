@@ -675,7 +675,7 @@ namespace DSAA9._0
                 return thisDate.Date.DayOfYear != 1;
             }
 
-            public static bool operator &(DateOperator thisDate, DateOperator? otherDate)
+            public static bool operator &(DateOperator thisDate, DateOperator otherDate)
             {
                 return thisDate.Equals(otherDate);
             }
@@ -733,7 +733,7 @@ namespace DSAA9._0
                     outF.WriteLine("Результат Equals между ними: " + copy.Equals(dates[0]));
                     DateOperator today = new DateOperator();
                     outF.WriteLine("Сегодня - " + today + ", вчера - " + today.PreviousDate + ", завтра - " + today.NextDate);
-                    outF.WriteLine("До начала следующего месяца осталось " + today.DaysUntilNextMonth + " дней");
+                    outF.WriteLine("До начала следующего месяца осталось дней: " + today.DaysUntilNextMonth);
                     outF.WriteLine("Этот год " + (today.IsYearBissextile ? "високосный" : "не високосный"));
                     outF.WriteLine(today[0] + " - можно вывести ещё и с помощью индексации");
                     outF.WriteLine(today[-7] + " - семь дней назад, с помощью индексации");
@@ -750,7 +750,7 @@ namespace DSAA9._0
                     {
                         for (int j = i + 1; j < dates.Count; j++)
                         {
-                            if (dates[i] && dates[j])
+                            if (dates[i] & dates[j])
                             {
                                 outF.WriteLine(dates[i] + " и " + dates[j] + " - одинаковые даты");
                             }
