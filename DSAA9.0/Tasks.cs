@@ -732,7 +732,8 @@ namespace DSAA9._0
                     outF.WriteLine("Хэш " + copy + " - " + copy.GetHashCode());
                     outF.WriteLine("Результат Equals между ними: " + copy.Equals(dates[0]));
                     DateOperator today = new DateOperator();
-                    outF.WriteLine("Сегодня - " + today + ", вчера - " + today.PreviousDate + ", завтра - " + today.NextDate);
+                    outF.WriteLine("Сегодня - " + today + ", вчера - " + today.PreviousDate + ", завтра - " +
+                                   today.NextDate);
                     outF.WriteLine("До начала следующего месяца осталось дней: " + today.DaysUntilNextMonth);
                     outF.WriteLine("Этот год " + (today.IsYearBissextile ? "високосный" : "не високосный"));
                     outF.WriteLine(today[0] + " - можно вывести ещё и с помощью индексации");
@@ -743,9 +744,9 @@ namespace DSAA9._0
                         outF.WriteLine(date + " - " + (!date ? "не последний день месяца" : "последний день месяца"));
                         outF.WriteLine(date + " - " + (date ? "начало года" : "не начало года"));
                     }
-                    
+
                     outF.WriteLine();
-                    
+
                     for (int i = 0; i < dates.Count - 1; i++)
                     {
                         for (int j = i + 1; j < dates.Count; j++)
@@ -762,6 +763,461 @@ namespace DSAA9._0
 
         #endregion
 
+        #region Пр 18, 19 (9)
+
+        private class Borrower
+        {
+            public DateTime LoanTakingDate { get; private set; }
+            public DateTime Deadline { get; private set; }
+            public double LoanSize { get; private set; }
+            public double InterestPerDay => 0.08;
+
+            public double RemainingDept { get; private set; }
+
+            public double RemainingDeptIfDeadlineExpired { get; private set; }
+
+            public bool DeadlineExpired => DateTime.Today.Day > Deadline.Day;
+
+            public Borrower(double loanSize, int forDays)
+            {
+                if (loanSize <= 0)
+                {
+                    throw new ArgumentOutOfRangeException("Вы не можете занять такую сумму!");
+                }
+
+                if (forDays <= 0)
+                {
+                    throw new ArgumentOutOfRangeException("Вы не можете взять в долг на такой период времени!");
+                }
+
+                LoanTakingDate = DateTime.Today;
+                Deadline = LoanTakingDate.AddDays(forDays);
+                LoanSize = loanSize;
+                RemainingDept = LoanSize *
+                                (1 + forDays * InterestPerDay);
+                RemainingDeptIfDeadlineExpired = RemainingDept * 2;
+            }
+        }
+
+        private class Investor
+        {
+            public DateTime DepositOpeningDate { get; private set; }
+            private DateTime WillRecieveAt { get; set; }
+            public double DepositSize { get; private set; }
+            public double InterestPerYear => 10;
+            public double AmountCanRecieve { get; private set; }
+            public bool CanRecieveWithoutMissings => DateTime.Today >= WillRecieveAt;
+
+            public Investor(double depositSize, int forDays)
+            {
+                if (depositSize <= 0)
+                {
+                    throw new ArgumentOutOfRangeException("Вы не можете открыть вклад с такой суммой!");
+                }
+
+                if (forDays <= 0)
+                {
+                    throw new ArgumentOutOfRangeException("Вы не можете открыть вклад на такой период времени!");
+                }
+
+                DepositOpeningDate = DateTime.Today;
+                WillRecieveAt = DepositOpeningDate.AddDays(forDays);
+                DepositSize = depositSize;
+                AmountCanRecieve = DepositSize *
+                                   (1 + forDays * InterestPerYear /
+                                       (DateTime.IsLeapYear(DepositOpeningDate.Year) ? 366 : 365));
+            }
+        }
+
+        private abstract class Client : IComparable<Client>
+        {
+            public string Name { get; private set; }
+            public double Balance { get; protected set; }
+            public DateTime AccountOpeningDate { get; }
+            public long AccountId { get; private set; }
+
+            private Borrower? _asBorrower;
+
+            public Borrower? AsBorrower
+            {
+                get => _asBorrower ?? throw new InvalidOperationException("Клиент не занимал денег у банка!");
+                protected set
+                {
+                    if (value != null)
+                    {
+                        throw new InvalidOperationException("Клиент уже занял денег у банка!");
+                    }
+
+                    _asBorrower = value;
+                }
+            }
+
+            private Investor? _asInvestor;
+
+            public Investor? AsInvestor
+            {
+                get => _asInvestor ?? throw new InvalidOperationException("Клиент не открывал вклад!");
+                protected set
+                {
+                    if (value != null)
+                    {
+                        throw new InvalidOperationException("Клиент уже открыл вклад!");
+                    }
+
+                    _asInvestor = value;
+                }
+            }
+
+            protected Client(string name)
+            {
+                AccountOpeningDate = DateTime.Today;
+                Name = name;
+                AccountId = Random.Shared.NextInt64();
+            }
+
+            public abstract void TopUp(double amount);
+
+            public abstract void Withdraw(double amount);
+
+            public abstract void UpdateIncome(double newIncome);
+
+            public abstract void TakeLoan(double amount, int forDays);
+
+            public void CloseLoan()
+            {
+                if (AsBorrower == null)
+                {
+                    throw new InvalidOperationException("У клиента нет никаких займов!");
+                }
+
+                double mustReturn = AsBorrower.DeadlineExpired
+                    ? AsBorrower.RemainingDeptIfDeadlineExpired
+                    : AsBorrower.RemainingDept;
+
+                if (Balance - mustReturn < 0)
+                {
+                    throw new InvalidOperationException("Недостаточно средств на балансе для погашения займа!");
+                }
+
+                Balance -= mustReturn;
+                AsBorrower = null;
+            }
+
+            public abstract void OpenDeposit(double amount, int forDays);
+
+            public void CloseDeposit()
+            {
+                if (AsInvestor == null)
+                {
+                    throw new InvalidOperationException("У клиента нет открытого вклада!");
+                }
+
+                double willRecieve = AsInvestor.CanRecieveWithoutMissings
+                    ? AsInvestor.AmountCanRecieve
+                    : AsInvestor.DepositSize *
+                      (1 + (DateTime.Today - AsInvestor.DepositOpeningDate).Days * (AsInvestor.InterestPerYear / 2) /
+                          (DateTime.IsLeapYear(AsInvestor.DepositOpeningDate.Year) ? 366 : 365));
+
+                Balance += willRecieve;
+                AsInvestor = null;
+            }
+
+            public string GetInvestorStatus()
+            {
+                try
+                {
+                    return AsInvestor != null ? "инвестор" : "лови ошибку";
+                }
+                catch (Exception e)
+                {
+                    return "не инвестор";
+                }
+            }
+
+            public string GetBorrowerStatus()
+            {
+                try
+                {
+                    return AsBorrower != null ? "заёмщик" : "лови ошибку";
+                }
+                catch (Exception e)
+                {
+                    return "не заёмщик";
+                }
+            }
+            
+            public override int GetHashCode()
+            {
+                return AccountId.GetHashCode();
+            }
+
+            public int CompareTo(Client other)
+            {
+                return AccountOpeningDate.CompareTo(other.AccountOpeningDate);
+            }
+        }
+
+        private class Individual : Client
+        {
+            private double _income;
+            private const double OneTimeWithdrawLimitMultiplyer = 6;
+            private const double LoanLimitMultiplyer = 3;
+
+            private double Income
+            {
+                get => _income;
+                set
+                {
+                    if (value < 0)
+                    {
+                        throw new ArgumentOutOfRangeException("Доход не может быть отрицательным!");
+                    }
+
+                    _income = value;
+                }
+            }
+
+            public double OneTimeWithdrawLimit { get; private set; } = 500000.00;
+            public double LoanLimit { get; private set; } = 150000.00;
+
+            public Individual(string name, double income) : base(name)
+            {
+                UpdateIncome(income);
+            }
+
+            public override void TopUp(double amount)
+            {
+                if (amount <= 0)
+                {
+                    throw new ArgumentOutOfRangeException("Вы не можете пополнить баланс на такую сумму!");
+                }
+
+                Balance += amount;
+            }
+
+            public override void Withdraw(double amount)
+            {
+                if (amount > OneTimeWithdrawLimit)
+                {
+                    throw new InvalidOperationException("Превышен лимит физ. лица на единоразовый вывод средств!");
+                }
+
+                if (Balance - amount < 0)
+                {
+                    throw new InvalidOperationException("Недостаточно средств на балансе для вывода!");
+                }
+
+                Balance -= amount;
+            }
+
+            public override void TakeLoan(double amount, int forDays)
+            {
+                if (amount > LoanLimit)
+                {
+                    throw new InvalidOperationException("Вы не можете взять займ на такую сумму!");
+                }
+
+                AsBorrower = new Borrower(amount, forDays);
+            }
+
+            public override void OpenDeposit(double amount, int forDays)
+            {
+                if (amount > LoanLimit)
+                {
+                    throw new InvalidOperationException("Вы не можете взять займ на такую сумму!");
+                }
+
+                AsBorrower = new Borrower(amount, forDays);
+            }
+
+            public void RegisterNewIncome(double amount)
+            {
+                if (amount <= 0)
+                {
+                    throw new ArgumentOutOfRangeException("Вы не можете зарегистрировать такой доход!");
+                }
+
+                TopUp(amount);
+            }
+
+            public sealed override void UpdateIncome(double newIncome)
+            {
+                Income = newIncome;
+                OneTimeWithdrawLimit = Income * OneTimeWithdrawLimit > OneTimeWithdrawLimit
+                    ? OneTimeWithdrawLimit
+                    : Income * OneTimeWithdrawLimitMultiplyer;
+                LoanLimit = Income * LoanLimitMultiplyer > LoanLimit ? LoanLimit : Income * LoanLimitMultiplyer;
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (obj == null)
+                {
+                    return false;
+                }
+
+                if (obj is not Individual)
+                {
+                    return false;
+                }
+
+                if (this == obj)
+                {
+                    return true;
+                }
+
+                Individual other = (Individual)obj;
+
+                return AccountId.Equals(other.AccountId);
+            }
+
+            public override string ToString()
+            {
+                return "id: " + AccountId + "\nсоздал аккаунт " + AccountOpeningDate.ToShortDateString() + "\nимя: " +
+                       Name + "\nбаланс: " + Balance + "\nстатусы: " + GetInvestorStatus() + ", " + GetBorrowerStatus();
+            }
+        }
+
+        private class LegalEntity : Client
+        {
+            private double _income;
+            private const double OneTimeWithdrawLimitMultiplyer = 12;
+            private const double LoanLimitMultiplyer = 6;
+            private List<Individual> employeers = new List<Individual>();
+
+            private double Income
+            {
+                get => _income;
+                set
+                {
+                    if (value < 0)
+                    {
+                        throw new ArgumentOutOfRangeException("Доход не может быть отрицательным!");
+                    }
+
+                    _income = value;
+                }
+            }
+
+            public double OneTimeWithdrawLimit { get; private set; } = 5000000.00;
+            public double LoanLimit { get; private set; } = 1000000.00;
+
+            public LegalEntity(string name, double income) : base(name)
+            {
+                UpdateIncome(income);
+            }
+
+            public override void TopUp(double amount)
+            {
+                Balance += amount;
+            }
+
+            public override void Withdraw(double amount)
+            {
+                if (amount > OneTimeWithdrawLimit)
+                {
+                    throw new InvalidOperationException("Превышен лимит физ. лица на единоразовый вывод средств!");
+                }
+
+                if (Balance - amount < 0)
+                {
+                    throw new InvalidOperationException("Недостаточно средств на балансе для вывода!");
+                }
+
+                Balance -= amount;
+            }
+
+            public override void TakeLoan(double amount, int forDays)
+            {
+                if (amount > LoanLimit)
+                {
+                    throw new InvalidOperationException("Вы не можете взять займ на такую сумму!");
+                }
+
+                AsBorrower = new Borrower(amount, forDays);
+            }
+
+            public override void OpenDeposit(double amount, int forDays)
+            {
+                if (amount > LoanLimit)
+                {
+                    throw new InvalidOperationException("Вы не можете взять займ на такую сумму!");
+                }
+
+                AsBorrower = new Borrower(amount, forDays);
+            }
+
+            public sealed override void UpdateIncome(double newIncome)
+            {
+                Income = newIncome;
+                OneTimeWithdrawLimit = Income * OneTimeWithdrawLimit > OneTimeWithdrawLimit
+                    ? OneTimeWithdrawLimit
+                    : Income * OneTimeWithdrawLimitMultiplyer;
+                LoanLimit = Income * LoanLimitMultiplyer > LoanLimit ? LoanLimit : Income * LoanLimitMultiplyer;
+            }
+
+            public void AddNewEmployeer(Individual employeer)
+            {
+                employeers.Add(employeer);
+            }
+
+            public void PayForWork(double amountForEach)
+            {
+                if (Balance - amountForEach * employeers.Count < 0)
+                {
+                    throw new InvalidOperationException("Недостаточно средств на балансе, чтобы заплатить столько!");
+                }
+
+                foreach (Individual employeer in employeers)
+                {
+                    employeer.RegisterNewIncome(amountForEach);
+                }
+            }
+
+            public override bool Equals(object? obj)
+            {
+                if (obj == null)
+                {
+                    return false;
+                }
+
+                if (obj is not LegalEntity)
+                {
+                    return false;
+                }
+
+                if (this == obj)
+                {
+                    return true;
+                }
+
+                LegalEntity other = (LegalEntity)obj;
+
+                return AccountId.Equals(other.AccountId);
+            }
+
+            public override string ToString()
+            {
+                return "id: " + AccountId + "\nсоздал аккаунт " + AccountOpeningDate.ToShortDateString() +
+                       "\nнаименование: " +
+                       Name + "\nбаланс: " + Balance + "\nстатусы: " + GetInvestorStatus() + ", " +
+                       GetBorrowerStatus() + "\nкол-во наёмных работников: " + employeers.Count;
+            }
+        }
+
+        public static void Pr1819Ix()
+        {
+            Individual smbd = new Individual("Егор", 30000);
+            Console.WriteLine(smbd);
+            LegalEntity comp = new LegalEntity("АО Умный Ретейл", 5000000);
+            comp.AddNewEmployeer(smbd);
+            comp.TopUp(5000);
+            comp.PayForWork(50);
+            Console.WriteLine();
+            Console.WriteLine(smbd);
+        }
+
+        #endregion
 
         #region Пр 6.2, II 4
 

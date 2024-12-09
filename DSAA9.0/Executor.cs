@@ -4,7 +4,7 @@
     {
         public static void Main(string[] args)
         {
-            Tasks.Pr1710();
+            Tasks.Pr1819Ix();
         }
     }
 }
