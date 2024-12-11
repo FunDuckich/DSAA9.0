@@ -776,7 +776,7 @@ namespace DSAA9._0
 
             public double RemainingDeptIfDeadlineExpired { get; private set; }
 
-            public bool DeadlineExpired => DateTime.Today.Day > Deadline.Day;
+            public bool DeadlineExpired => DateTime.Today > Deadline;
 
             public Borrower(double loanSize, int forDays)
             {
@@ -1043,7 +1043,7 @@ namespace DSAA9._0
             public sealed override void UpdateIncome(double newIncome)
             {
                 Income = newIncome;
-                OneTimeWithdrawLimit = Income * OneTimeWithdrawLimit > OneTimeWithdrawLimit
+                OneTimeWithdrawLimit = Income * OneTimeWithdrawLimitMultiplyer > OneTimeWithdrawLimit
                     ? OneTimeWithdrawLimit
                     : Income * OneTimeWithdrawLimitMultiplyer;
                 LoanLimit = Income * LoanLimitMultiplyer > LoanLimit ? LoanLimit : Income * LoanLimitMultiplyer;
@@ -1150,7 +1150,7 @@ namespace DSAA9._0
             public sealed override void UpdateIncome(double newIncome)
             {
                 Income = newIncome;
-                OneTimeWithdrawLimit = Income * OneTimeWithdrawLimit > OneTimeWithdrawLimit
+                OneTimeWithdrawLimit = Income * OneTimeWithdrawLimitMultiplyer > OneTimeWithdrawLimit
                     ? OneTimeWithdrawLimit
                     : Income * OneTimeWithdrawLimitMultiplyer;
                 LoanLimit = Income * LoanLimitMultiplyer > LoanLimit ? LoanLimit : Income * LoanLimitMultiplyer;
