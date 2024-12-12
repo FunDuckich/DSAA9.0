@@ -1,0 +1,4 @@
+﻿I;Ira;60000
+I;Nikita;20000
+L;RRR;0
+L;Kampaniya;1000000

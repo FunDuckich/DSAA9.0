@@ -843,12 +843,17 @@ namespace DSAA9._0
                 get => _asBorrower ?? throw new InvalidOperationException("Клиент не занимал денег у банка!");
                 protected set
                 {
-                    if (value != null)
+                    try
                     {
-                        throw new InvalidOperationException("Клиент уже занял денег у банка!");
+                        if (_asBorrower != null)
+                        {
+                            throw new InvalidOperationException("Клиент уже занял денег у банка!");
+                        }
                     }
-
-                    _asBorrower = value;
+                    catch (Exception e)
+                    {
+                        _asBorrower = value;
+                    }
                 }
             }
 
@@ -859,12 +864,17 @@ namespace DSAA9._0
                 get => _asInvestor ?? throw new InvalidOperationException("Клиент не открывал вклад!");
                 protected set
                 {
-                    if (value != null)
+                    try
                     {
-                        throw new InvalidOperationException("Клиент уже открыл вклад!");
+                        if (value != null)
+                        {
+                            throw new InvalidOperationException("Клиент уже открыл вклад!");
+                        }
                     }
-
-                    _asInvestor = value;
+                    catch
+                    {
+                        _asInvestor = value;
+                    }
                 }
             }
 
@@ -945,7 +955,7 @@ namespace DSAA9._0
                     return "не заёмщик";
                 }
             }
-            
+
             public override int GetHashCode()
             {
                 return AccountId.GetHashCode();
@@ -963,10 +973,10 @@ namespace DSAA9._0
             private const double OneTimeWithdrawLimitMultiplyer = 6;
             private const double LoanLimitMultiplyer = 3;
 
-            private double Income
+            public double Income
             {
                 get => _income;
-                set
+                private set
                 {
                     if (value < 0)
                     {
@@ -1085,10 +1095,10 @@ namespace DSAA9._0
             private const double LoanLimitMultiplyer = 6;
             private List<Individual> employeers = new List<Individual>();
 
-            private double Income
+            public double Income
             {
                 get => _income;
-                set
+                private set
                 {
                     if (value < 0)
                     {
@@ -1172,6 +1182,8 @@ namespace DSAA9._0
                 {
                     employeer.RegisterNewIncome(amountForEach);
                 }
+
+                Balance -= amountForEach * employeers.Count;
             }
 
             public override bool Equals(object? obj)
@@ -1207,14 +1219,66 @@ namespace DSAA9._0
 
         public static void Pr1819Ix()
         {
-            Individual smbd = new Individual("Егор", 30000);
-            Console.WriteLine(smbd);
-            LegalEntity comp = new LegalEntity("АО Умный Ретейл", 5000000);
-            comp.AddNewEmployeer(smbd);
-            comp.TopUp(5000);
-            comp.PayForWork(50);
-            Console.WriteLine();
-            Console.WriteLine(smbd);
+            using (StreamReader inF = new StreamReader(@"C:\Users\petro\RiderProjects\DSAA9.0\DSAA9.0\Pr1819(in).txt"))
+            {
+                using (StreamWriter outF = new StreamWriter(@"C:\Users\petro\RiderProjects\DSAA9.0\DSAA9.0\Pr1819(out).txt", false))
+                {
+                    List<Client> clients = new List<Client>();
+                    string? line;
+                    while ((line = inF.ReadLine()) != null)
+                    {
+                        string[] data = line.Split(';');
+                        string type = data[0];
+                        string name = data[1];
+                        double income = double.Parse(data[2]);
+
+                        switch (type)
+                        {
+                            case "I":
+                                clients.Add(new Individual(name, income));
+                                break;
+                            case "L":
+                                clients.Add(new LegalEntity(name, income));
+                                break;
+                        }
+                    }
+
+                    foreach (Client client in clients)
+                    {
+                        client.TopUp(20000);
+                        outF.WriteLine(client);
+                        try
+                        {
+                            client.TakeLoan(15000, 5);
+                        }
+                        catch (Exception e)
+                        {
+                            outF.WriteLine(e + " - " + client.Name);
+                            
+                        }
+                        outF.WriteLine();
+                    }
+                    
+                    outF.WriteLine();
+                    outF.WriteLine();
+
+                    ((LegalEntity)clients[3]).AddNewEmployeer((Individual)clients[1]);
+                    outF.WriteLine(clients[3]);
+                    outF.WriteLine();
+                    ((LegalEntity)clients[3]).PayForWork(15000);
+                    outF.WriteLine(clients[1]);
+                    outF.WriteLine();
+                    outF.WriteLine(clients[3]);
+                    try
+                    {
+                        ((LegalEntity)clients[3]).PayForWork(15000);
+                    }
+                    catch (Exception e)
+                    {
+                        outF.WriteLine(e);
+                    }
+                }
+            }
         }
 
         #endregion
